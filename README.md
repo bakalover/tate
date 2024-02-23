@@ -1,3 +1,3 @@
-# tate
-Custom waitgroups 
+## Tate - structured concurrency
 - Eager Nursery
+- Repeater
