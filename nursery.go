@@ -2,25 +2,25 @@ package tate
 
 import "sync"
 
-type Chainer struct {
-	toJoin      []Joinable
-	routineRefs sync.WaitGroup
+type Linker struct {
+	toJoin          []Joinable
+	routinesLinks sync.WaitGroup
 }
 
-func (c *Chainer) AddRef() {
-	c.routineRefs.Add(1)
+func (c *Linker) AddRef() {
+	c.routinesLinks.Add(1)
 }
 
-func (c *Chainer) ReleaseRef() {
-	c.routineRefs.Done()
+func (c *Linker) ReleaseRef() {
+	c.routinesLinks.Done()
 }
 
-func (c *Chainer) Link(js ...Joinable) {
+func (c *Linker) Link(js ...Joinable) {
 	c.toJoin = append(c.toJoin, js...)
 }
 
-func (c *Chainer) Join() {
-	c.routineRefs.Wait()
+func (c *Linker) Join() {
+	c.routinesLinks.Wait()
 	for _, js := range c.toJoin {
 		js.Join()
 	}
@@ -28,10 +28,10 @@ func (c *Chainer) Join() {
 
 type Nursery struct {
 	wg sync.WaitGroup
-	cn Chainer
+	cn Linker
 }
 
-func NewNursery(cn *Chainer) *Nursery {
+func NewNursery(cn *Linker) *Nursery {
 	nr := &Nursery{}
 	if cn != nil {
 		cn.Link(nr)
@@ -39,14 +39,14 @@ func NewNursery(cn *Chainer) *Nursery {
 	return nr
 }
 
-func (n *Nursery) Add(routine func(c *Chainer)) *Nursery {
+func (n *Nursery) Add(routine func(c *Linker)) *Nursery {
 	n.wg.Add(1)
 	n.cn.AddRef()
 	go func() {
 		defer n.wg.Done()
 		routine(&n.cn)
-		
-		// At this point we have strong knowledge about all subsciptions on Chainer 
+
+		// At this point we have strong knowledge about all subsciptions on Linker
 		n.cn.ReleaseRef()
 	}()
 	return n
