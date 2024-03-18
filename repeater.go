@@ -2,28 +2,24 @@ package tate
 
 import (
 	"context"
-	"sync"
 )
 
 type Repeater struct {
-	wg     sync.WaitGroup
-	ctx    context.Context
-	cancel context.CancelFunc
+	handles []Joinable
+	ctx     context.Context
+	cancel  context.CancelFunc
 }
 
 func NewRepeater() *Repeater {
 	ctx, cancel := context.WithCancel(context.Background())
 	return &Repeater{
-		wg:     sync.WaitGroup{},
 		ctx:    ctx,
 		cancel: cancel,
 	}
 }
 
-func (rp *Repeater) Repeat(routine func()) *Repeater {
-	rp.wg.Add(1)
-	go func() {
-		defer rp.wg.Done()
+func (rp *Repeater) Go(routine func()) *Repeater {
+	h := Go(func() {
 		for {
 			select {
 			case <-rp.ctx.Done():
@@ -32,11 +28,14 @@ func (rp *Repeater) Repeat(routine func()) *Repeater {
 				routine()
 			}
 		}
-	}()
+	})
+	rp.handles = append(rp.handles, h)
 	return rp
 }
 
 func (rp *Repeater) Join() {
 	rp.cancel()
-	rp.wg.Wait()
+	for _, h := range rp.handles {
+		h.Join()
+	}
 }

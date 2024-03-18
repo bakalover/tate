@@ -1,58 +1,31 @@
 package tate
 
-import "sync"
-
-type Linker struct {
-	toJoin          []Joinable
-	routinesLinks sync.WaitGroup
-}
-
-func (c *Linker) AddRef() {
-	c.routinesLinks.Add(1)
-}
-
-func (c *Linker) ReleaseRef() {
-	c.routinesLinks.Done()
-}
-
-func (c *Linker) Link(js ...Joinable) {
-	c.toJoin = append(c.toJoin, js...)
-}
-
-func (c *Linker) Join() {
-	c.routinesLinks.Wait()
-	for _, js := range c.toJoin {
-		js.Join()
-	}
-}
-
 type Nursery struct {
-	wg sync.WaitGroup
-	cn Linker
+	handles []Joinable
 }
 
-func NewNursery(cn *Linker) *Nursery {
-	nr := &Nursery{}
-	if cn != nil {
-		cn.Link(nr)
-	}
-	return nr
+func NewNursery() *Nursery {
+	return &Nursery{}
 }
 
-func (n *Nursery) Add(routine func(c *Linker)) *Nursery {
-	n.wg.Add(1)
-	n.cn.AddRef()
-	go func() {
-		defer n.wg.Done()
-		routine(&n.cn)
+func (n *Nursery) Go(routine func()) *Nursery {
+	h := Go(func() { routine() })
+	n.handles = append(n.handles, h)
+	return n
+}
 
-		// At this point we have strong knowledge about all subsciptions on Linker
-		n.cn.ReleaseRef()
-	}()
+func (n *Nursery) Scope(routine func(sc *Scope)) *Nursery {
+	scope := NewScope()
+	h := Go(func() {
+		defer scope.Join()
+		routine(scope)
+	})
+	n.handles = append(n.handles, h)
 	return n
 }
 
 func (n *Nursery) Join() {
-	n.cn.Join()
-	n.wg.Wait()
+	for _, h := range n.handles {
+		h.Join()
+	}
 }

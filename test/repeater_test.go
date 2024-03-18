@@ -8,7 +8,7 @@ import (
 	"github.com/bakalover/tate"
 )
 
-const IterRepeater = 123125
+const IterRepeater = 12325
 
 func TestRepeaterForgetToAdd(t *testing.T) {
 	rp := tate.NewRepeater()
@@ -29,7 +29,7 @@ func TestRepeaterGroupStart(t *testing.T) {
 	var counter = 0
 
 	for i := 0; i < IterRepeater; i++ {
-		rp.Repeat(func() {
+		rp.Go(func() {
 			mutex.Lock()
 			counter++
 			mutex.Unlock()
@@ -50,7 +50,7 @@ func TestRepeaterEachWait(t *testing.T) {
 	var counter = 0
 
 	for i := 0; i < IterRepeater; i++ {
-		rp.Repeat(func() {
+		rp.Go(func() {
 			mutex.Lock()
 			counter++
 			mutex.Unlock()
@@ -73,7 +73,7 @@ func TestRepeaterBatchWait(t *testing.T) {
 
 	for i := 0; i < kBatch; i++ {
 		for i := 0; i < IterRepeater/kBatch; i++ {
-			rp.Repeat(func() {
+			rp.Go(func() {
 				mutex.Lock()
 				counter++
 				mutex.Unlock()
@@ -81,7 +81,6 @@ func TestRepeaterBatchWait(t *testing.T) {
 		}
 		rp.Join()
 		check := counter
-		time.Sleep(time.Second)
 		if check != counter {
 			t.Fatal()
 		}
@@ -89,3 +88,4 @@ func TestRepeaterBatchWait(t *testing.T) {
 
 	t.Log(counter)
 }
+

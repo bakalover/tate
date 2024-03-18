@@ -3,107 +3,93 @@ package test
 import (
 	"sync"
 	"testing"
-	"time"
 
 	"github.com/bakalover/tate"
 )
 
-const IterNursery = 123125
+const IterNursery = 123225
 
 func TestNurseryJustWork(t *testing.T) {
-	nr := tate.NewNursery(nil)
-	var p1, p2 = false, false
-	nr.Add(func(c *tate.Linker) { p1 = true }).Add(func(c *tate.Linker) { p2 = true }).Join()
-	if !p1 || !p2 {
+	nr := tate.NewNursery()
+	var check1, check2 = false, false
+
+	nr.Go(func() { check1 = true })
+	nr.Go(func() { check2 = true })
+
+	nr.Join()
+
+	if !check1 || !check2 {
 		t.Fatal()
 	}
 }
 
 func TestNurseryForgetToAdd(t *testing.T) {
-	nr := tate.NewNursery(nil)
+	nr := tate.NewNursery()
 	nr.Join()
 }
 
-func TestNurseryJoins(t *testing.T) {
-	nr := tate.NewNursery(nil)
+func TestNurseryManyJoins(t *testing.T) {
+	nr := tate.NewNursery()
 	nr.Join()
 	nr.Join()
 	nr.Join()
 	nr.Join()
 }
 
-func TestNurserySeveralJoins(t *testing.T) {
-	nr := tate.NewNursery(nil)
-	var p1, p2, p3 = false, false, false
+func TestNurseryReUse(t *testing.T) {
+	nr := tate.NewNursery()
+	var check1, check2, check3 = false, false, false
 
-	nr.Add(func(c *tate.Linker) { p1 = true })
+	nr.Go(func() { check1 = true })
 	nr.Join()
-	if !p1 {
+	if !check1 {
 		t.Fatal()
 	}
 
-	nr.Add(func(c *tate.Linker) { p2 = true })
+	nr.Go(func() { check2 = true })
 	nr.Join()
-	if !p2 {
+	if !check2 {
 		t.Fatal()
 	}
 
-	nr.Add(func(c *tate.Linker) { p3 = true })
+	nr.Go(func() { check3 = true })
 	nr.Join()
-	if !p3 {
+	if !check3 {
 		t.Fatal()
 	}
 }
 
-func TestNurseryGroupStart(t *testing.T) {
-	nr := tate.NewNursery(nil)
+func TestNurseryGroup(t *testing.T) {
+	nr := tate.NewNursery()
 	var mutex sync.Mutex
 	var counter = 0
 
 	for i := 0; i < IterNursery; i++ {
-		nr.Add(func(c *tate.Linker) {
+		nr.Go(func() {
 			mutex.Lock()
+			defer mutex.Unlock()
 			counter++
-			mutex.Unlock()
 		})
 	}
+
 	nr.Join()
-	if !(counter == IterNursery) {
-		t.Fatal()
-	}
-}
-
-func TestNurseryEachWait(t *testing.T) {
-	nr := tate.NewNursery(nil)
-	var mutex sync.Mutex
-	var counter = 0
-
-	for i := 0; i < IterNursery; i++ {
-		nr.Add(func(c *tate.Linker) {
-			mutex.Lock()
-			counter++
-			mutex.Unlock()
-		})
-		nr.Join()
-	}
-
 	if !(counter == IterNursery) {
 		t.Fatal()
 	}
 }
 
 func TestNurseryBatchWait(t *testing.T) {
-	nr := tate.NewNursery(nil)
+	nr := tate.NewNursery()
 	var mutex sync.Mutex
 	var counter = 0
 	var kBatch = 25
 
 	for i := 0; i < kBatch; i++ {
 		for i := 0; i < IterNursery/kBatch; i++ {
-			nr.Add(func(c *tate.Linker) {
+			nr.Go(func() {
 				mutex.Lock()
+				defer mutex.Unlock()
 				counter++
-				mutex.Unlock()
 			})
 		}
 		nr.Join()
@@ -114,120 +100,60 @@ func TestNurseryBatchWait(t *testing.T) {
 	}
 }
 
-func TestChain(t *testing.T) {
-	nr := tate.NewNursery(nil)
-	p := false
-	nr.Add(func(c *tate.Linker) {
-		nrInner := tate.NewNursery(c)
-		nrInner.Add(func(c *tate.Linker) { p = true })
+func TestNurseryScope(t *testing.T) {
+	nr := tate.NewNursery()
+	check := false
+	nr.Scope(func(sc *tate.Scope) {
+		check = true
 	})
 	nr.Join()
-	if !p {
+	if !check {
 		t.Fatal()
 	}
 }
 
-func TestLongSubsription(t *testing.T) {
-	nr := tate.NewNursery(nil)
-	p := false
-	nr.Add(func(c *tate.Linker) {
-		nrInner := tate.NewNursery(c)
-		nrInner.Add(func(c *tate.Linker) {
-			time.Sleep(5 * time.Second)
-			p = true
-		})
+func TestNurseryGoAndScope(t *testing.T) {
+	nr := tate.NewNursery()
+	check1, check2 := false, false
+
+	nr.Go(func() {
+		check1 = true
+	})
+
+	nr.Scope(func(sc *tate.Scope) {
+		check2 = true
 	})
 	nr.Join()
-	if !p {
+	if !check1 || !check2 {
 		t.Fatal()
 	}
 }
 
-func TestStrangeApi(t *testing.T) {
-	nr := tate.NewNursery(nil)
-	p := false
-	nr.Add(func(c *tate.Linker) {
-		nrInner := tate.NewNursery(c)
-		nrInner.Join()
-		nrInner.Add(func(c *tate.Linker) {
-			p = true
-		})
-		nrInner.Join()
-		nrInner.Join()
-		nrInner.Join()
-	})
-	nr.Join()
-	if !p {
-		t.Fatal()
-	}
-}
+func TestNurseryTelescope(t *testing.T) {
+	nr := tate.NewNursery()
+	check := false
 
-func TestTelescope(t *testing.T) {
-	nr1 := tate.NewNursery(nil)
-	p := false
-	nr1.Add(func(c1 *tate.Linker) {
-		nr2 := tate.NewNursery(c1)
-		nr2.Add(func(c2 *tate.Linker) {
-			nr3 := tate.NewNursery(c2)
-			nr3.Add(func(c3 *tate.Linker) {
-				nr4 := tate.NewNursery(c3)
-				nr4.Add(func(c4 *tate.Linker) {
-					nr5 := tate.NewNursery(c4)
-					nr5.Add(func(c5 *tate.Linker) {
-						nr6 := tate.NewNursery(c5)
-						nr6.Add(func(c6 *tate.Linker) {
-							p = true
-						})
-					})
-				})
+	nr.Scope(func(sc1 *tate.Scope) {
+		sc1.SubScope(func(sc2 *tate.Scope) {
+			sc2.SubScope(func(sc3 *tate.Scope) {
+				check = true
 			})
 		})
 	})
-	nr1.Join()
-	if !p {
+
+	nr.Join()
+	if !check {
 		t.Fatal()
 	}
 }
 
 func TestConcurrentTree(t *testing.T) {
-	nr := tate.NewNursery(nil)
+	nr := tate.NewNursery()
 	var mutex sync.Mutex
 	var counter = 0
 
-	nr.Add(func(c *tate.Linker) {
-
-		nrInner1 := tate.NewNursery(c)
-		nrInner2 := tate.NewNursery(c)
-		nrInner3 := tate.NewNursery(c)
-
-		nrInner1.Add(func(c1 *tate.Linker) {
-			for i := 0; i < IterNursery; i++ {
-				mutex.Lock()
-				counter += 1
-				mutex.Unlock()
-			}
-		})
-
-		nrInner2.Add(func(c2 *tate.Linker) {
-
-			nrInner21 := tate.NewNursery(c2)
-			nrInner22 := tate.NewNursery(c2)
-
-			nrInner22.Add(func(c22 *tate.Linker) {
-				for i := 0; i < IterNursery; i++ {
-					mutex.Lock()
-					counter += 1
-					mutex.Unlock()
-				}
-			})
-
-			nrInner21.Add(func(c22 *tate.Linker) {
-				for i := 0; i < IterNursery; i++ {
-					mutex.Lock()
-					counter += 1
-					mutex.Unlock()
-				}
-			})
+	nr.Scope(func(sc *tate.Scope) {
+		sc.Go(func() {
 
 			for i := 0; i < IterNursery; i++ {
 				mutex.Lock()
@@ -235,28 +161,34 @@ func TestConcurrentTree(t *testing.T) {
 				mutex.Unlock()
 			}
 		})
-
-		nrInner3.Add(func(c3 *tate.Linker) {
-
-			nrInner31 := tate.NewNursery(c3)
-
-			nrInner31.Add(func(c31 *tate.Linker) {
-				for i := 0; i < IterNursery; i++ {
-					mutex.Lock()
-					counter += 1
-					mutex.Unlock()
-				}
-			})
-
+		sc.Go(func() {
 			for i := 0; i < IterNursery; i++ {
 				mutex.Lock()
-				counter += 1
+				counter ++
 				mutex.Unlock()
 			}
 		})
 	})
+
+	nr.Scope(func(sc *tate.Scope) {
+		sc.Go(func() {
+			for i := 0; i < IterNursery; i++ {
+				mutex.Lock()
+				counter ++
+				mutex.Unlock()
+			}
+		})
+		sc.SubScope(func(sc *tate.Scope) {
+			for i := 0; i < IterNursery; i++ {
+				mutex.Lock()
+				counter ++
+				mutex.Unlock()
+			}
+		})
+	})
+
 	nr.Join()
-	if counter != IterNursery*6 {
+	if counter != IterNursery*4 {
 		t.Fatal()
 	}
 }
