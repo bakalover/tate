@@ -1,40 +1,55 @@
 ## Tate - structured concurrency
+
+Never write `go` statement again!
+
+
 - Manual gorroutine handle:
 ```golang
-h := tate.Go(func())
-h.Join()
+h := tate.Go(func(){})
+h.Join() // Ok
+h.Join() // panic! -> Double join
 ```
 
 
-- Scope with SubScopes:
+- Fixed Scope:
 ```golang
-sc := tate.NewScope()
-sc.Go(func())
-sc.SubScope(func(sub *Scope){
-    sub.Go(func())
-})
-sc.Join()
+tate.FixScope(func(s *Scope){
+    s.Go(func(){})
+    s.Go(func(){})
+    s.Go(func(){})
+}) // Synchronous wait of all goroutines
 ```
 
-- Tree Nursery (uses simple Go or scopes)
-
+- Dynamic Scope:
 ```golang
-nr := tate.NewNursery()
-nr.Go(func())
-// Scopes and inner subscopes
-nr.Scope(func(sc *Scope))
-nr.Join() 
+j := tate.DynScope(func(s *Scope){
+    s.Go(func(){})
+    s.Go(func(){})
+    s.Go(func(){})
+}) 
+
+j.Join() // Only at that point all goroutines are done
+j.Join() // panic! -> Double join
+
 ```
 - Repeater
 ```golang
 rp := tate.NewRepeater()
 // Repeats in infinite cycle each routine
-rp.Go(func())
-rp.Go(func())
-// Instantly cancels all cycles and joins routines
-rp.Join() 
-```
+rp.Go(func(){})
+rp.Go(func(){})
+// Instantly cancels all cycles and joins goroutines
+rp.CancelJoin() 
 
+// We can do it again and again
+rp.Go(func(){})
+rp.Go(func(){})
+rp.CancelJoin() 
+```
+## Todo
++ Tree Design
++ Inject Cancellation
++ Maybe some functional style
 
 ## Reference
 + [Go statement considered harmful](https://vorpus.org/blog/notes-on-structured-concurrency-or-go-statement-considered-harmful/)
