@@ -6,21 +6,21 @@ import (
 	"time"
 
 	"github.com/bakalover/tate"
+	"github.com/stretchr/testify/assert"
 )
 
 const IterRepeater = 12325
 
 func TestRepeaterForgetToAdd(t *testing.T) {
 	rp := tate.NewRepeater()
-	rp.Join()
+	rp.CancelJoin()
 }
 
 func TestRepeaterJoins(t *testing.T) {
 	rp := tate.NewRepeater()
-	rp.Join()
-	rp.Join()
-	rp.Join()
-	rp.Join()
+	rp.CancelJoin()
+	rp.CancelJoin()
+	rp.CancelJoin()
 }
 
 func TestRepeaterGroupStart(t *testing.T) {
@@ -35,12 +35,10 @@ func TestRepeaterGroupStart(t *testing.T) {
 			mutex.Unlock()
 		})
 	}
-	rp.Join()
+	rp.CancelJoin()
 	check := counter
 	time.Sleep(time.Second)
-	if check != counter {
-		t.Fatal()
-	}
+	assert.Equal(t, check, counter)
 	t.Log(counter)
 }
 
@@ -55,12 +53,10 @@ func TestRepeaterEachWait(t *testing.T) {
 			counter++
 			mutex.Unlock()
 		})
-		rp.Join()
+		rp.CancelJoin()
 		check := counter
 		time.Sleep(time.Microsecond * 3)
-		if check != counter {
-			t.Fatal()
-		}
+		assert.Equal(t, check, counter)
 	}
 	t.Log(counter)
 }
@@ -79,13 +75,10 @@ func TestRepeaterBatchWait(t *testing.T) {
 				mutex.Unlock()
 			})
 		}
-		rp.Join()
+		rp.CancelJoin()
 		check := counter
-		if check != counter {
-			t.Fatal()
-		}
+		assert.Equal(t, check, counter)
 	}
 
 	t.Log(counter)
 }
-

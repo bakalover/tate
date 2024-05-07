@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/bakalover/tate"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestGoHandle(t *testing.T) {
@@ -12,12 +13,17 @@ func TestGoHandle(t *testing.T) {
 		check = true
 	})
 	h.Join()
-	if !check {
-		t.Fatal()
-	}
+	assert.True(t, check)
 }
 
-func TestInsideHandle(t *testing.T) {
+func TestShouldPanic(t *testing.T) {
+	h := tate.Go(func() {})
+	h.Join()
+	assert.Panics(t, func() { h.Join() })
+	assert.Panics(t, func() { h.Join() })
+}
+
+func InnerHandleTest(t *testing.T) {
 	check1 := false
 	check2 := false
 
@@ -29,8 +35,5 @@ func TestInsideHandle(t *testing.T) {
 	})
 
 	h1.Join()
-
-	if !check1 || !check2 {
-		t.Fatal()
-	}
+	assert.True(t, check1 && check2)
 }

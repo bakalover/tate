@@ -1,30 +1,30 @@
 package tate
 
 type Scope struct {
-	handles []Joinable
+	handles []IJoin
 }
 
-func NewScope() *Scope {
-	return &Scope{}
+func FixScope(f func(s *Scope)) {
+	sc := &Scope{}
+	f(sc)     // Synchronous spawn
+	sc.Join() // Await IJoins spawned inside Scope
 }
 
-func (sc *Scope) Join() {
-	for _, h := range sc.handles {
+func DynScope(f func(s *Scope)) *JoinHandle {
+	sc := &Scope{}
+	f(sc)
+	return NewJoinHandle(sc) // Join where we need
+}
+
+func (s *Scope) Go(routine func()) *Scope {
+	h := Go(func() { routine() })
+	s.handles = append(s.handles, h)
+	return s
+}
+
+
+func (s *Scope) Join() {
+	for _, h := range s.handles {
 		h.Join()
 	}
-}
-
-func (sc *Scope) Go(routine func()) *Scope {
-	h := Go(func() { routine() })
-	sc.handles = append(sc.handles, h)
-	return sc
-}
-
-func (sc *Scope) SubScope(routine func(sub *Scope)) {
-	subScope := NewScope()
-	h := Go(func() {
-		defer subScope.Join()
-		routine(subScope)
-	})
-	sc.handles = append(sc.handles, h)
 }

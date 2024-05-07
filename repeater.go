@@ -5,7 +5,7 @@ import (
 )
 
 type Repeater struct {
-	handles []Joinable
+	handles []IJoin
 	ctx     context.Context
 	cancel  context.CancelFunc
 }
@@ -33,9 +33,10 @@ func (rp *Repeater) Go(routine func()) *Repeater {
 	return rp
 }
 
-func (rp *Repeater) Join() {
+func (rp *Repeater) CancelJoin() {
 	rp.cancel()
 	for _, h := range rp.handles {
 		h.Join()
 	}
+	rp.handles = []IJoin{}
 }
