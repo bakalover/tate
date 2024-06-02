@@ -29,7 +29,7 @@ func TestRepeaterGroupStart(t *testing.T) {
 	var counter = 0
 
 	for i := 0; i < IterRepeater; i++ {
-		rp.Go(func() {
+		rp.Go(0, func() {
 			mutex.Lock()
 			counter++
 			mutex.Unlock()
@@ -48,7 +48,7 @@ func TestRepeaterEachWait(t *testing.T) {
 	var counter = 0
 
 	for i := 0; i < IterRepeater; i++ {
-		rp.Go(func() {
+		rp.Go(0, func() {
 			mutex.Lock()
 			counter++
 			mutex.Unlock()
@@ -69,7 +69,7 @@ func TestRepeaterBatchWait(t *testing.T) {
 
 	for i := 0; i < kBatch; i++ {
 		for i := 0; i < IterRepeater/kBatch; i++ {
-			rp.Go(func() {
+			rp.Go(0, func() {
 				mutex.Lock()
 				counter++
 				mutex.Unlock()
