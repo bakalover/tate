@@ -16,12 +16,11 @@ func DynScope(f func(s *Scope)) *JoinHandle {
 	return NewJoinHandle(sc) // Join where we need
 }
 
-func (s *Scope) Go(routine func()) *Scope {
-	h := Go(func() { routine() })
+func (s *Scope) Go(routine func(...any), args ...any) *Scope {
+	h := Go(func(...any) { routine(args...) })
 	s.handles = append(s.handles, h)
 	return s
 }
-
 
 func (s *Scope) Join() {
 	for _, h := range s.handles {

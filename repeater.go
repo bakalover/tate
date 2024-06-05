@@ -2,6 +2,7 @@ package tate
 
 import (
 	"context"
+	"time"
 )
 
 type Repeater struct {
@@ -18,8 +19,8 @@ func NewRepeater() *Repeater {
 	}
 }
 
-func (rp *Repeater) Go(routine func()) *Repeater {
-	h := Go(func() {
+func (rp *Repeater) Go(d time.Duration, routine func()) *Repeater {
+	h := Go(func(...any) {
 		for {
 			select {
 			case <-rp.ctx.Done():
@@ -27,6 +28,7 @@ func (rp *Repeater) Go(routine func()) *Repeater {
 			default:
 				routine()
 			}
+			time.Sleep(d)
 		}
 	})
 	rp.handles = append(rp.handles, h)
