@@ -23,7 +23,7 @@ func TestShouldPanic(t *testing.T) {
 	assert.Panics(t, func() { h.Join() })
 }
 
-func InnerHandleTest(t *testing.T) {
+func TestInnerHandle(t *testing.T) {
 	check1 := false
 	check2 := false
 
@@ -36,4 +36,13 @@ func InnerHandleTest(t *testing.T) {
 
 	h1.Join()
 	assert.True(t, check1 && check2)
+}
+
+func FuzzArgs(f *testing.F) {
+	f.Add(912878)
+	f.Fuzz(func(t *testing.T, a int) {
+		tate.Go(func(args ...any) {
+			assert.Equal(t, a, args[0].(int))
+		}, a)
+	})
 }

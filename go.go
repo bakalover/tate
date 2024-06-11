@@ -22,7 +22,6 @@ func (g *Gorroutine) Join() {
 	g.wg.Wait()
 }
 
-// Cancellation??
 func Go(routine func(...any), args ...any) *JoinHandle {
 	g := &Gorroutine{routine: routine, args: args}
 	g.Launch()
