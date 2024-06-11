@@ -40,11 +40,6 @@ rp.Go(func(){})
 rp.Go(func(){})
 // Instantly cancels all cycles and joins goroutines
 rp.CancelJoin() 
-
-// We can do it again and again
-rp.Go(func(){})
-rp.Go(func(){})
-rp.CancelJoin() 
 ```
 ## Todo
 + Tree Design

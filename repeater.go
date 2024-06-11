@@ -40,5 +40,4 @@ func (rp *Repeater) CancelJoin() {
 	for _, h := range rp.handles {
 		h.Join()
 	}
-	rp.handles = []IJoin{}
 }
