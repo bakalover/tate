@@ -4,13 +4,13 @@ import (
 	"sync"
 )
 
-type Gorroutine struct {
-	routine func(...any)
+type goroutine struct {
+	routine func(args ...any)
 	args    []any
 	wg      sync.WaitGroup
 }
 
-func (g *Gorroutine) Launch() {
+func (g *goroutine) Launch() {
 	g.wg.Add(1)
 	go func() {
 		defer g.wg.Done()
@@ -18,12 +18,12 @@ func (g *Gorroutine) Launch() {
 	}()
 }
 
-func (g *Gorroutine) Join() {
+func (g *goroutine) Join() {
 	g.wg.Wait()
 }
 
-func Go(routine func(...any), args ...any) *JoinHandle {
-	g := &Gorroutine{routine: routine, args: args}
+func Go(routine func(args ...any), args ...any) *JoinHandle {
+	g := &goroutine{routine: routine, args: args}
 	g.Launch()
 	return NewJoinHandle(g)
 }

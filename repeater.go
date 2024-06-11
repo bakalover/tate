@@ -19,8 +19,8 @@ func NewRepeater() *Repeater {
 	}
 }
 
-func (rp *Repeater) Go(d time.Duration, routine func(...any), args ...any) *Repeater {
-	h := Go(func(...any) {
+func (rp *Repeater) Go(d time.Duration, routine func(args ...any), args ...any) *Repeater {
+	h := Go(func(args ...any) {
 		for {
 			select {
 			case <-rp.ctx.Done():

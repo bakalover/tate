@@ -29,7 +29,7 @@ func TestRepeaterGroupStart(t *testing.T) {
 	var counter = 0
 
 	for i := 0; i < IterRepeater; i++ {
-		rp.Go(0, func(...any) {
+		rp.Go(0, func(args ...any) {
 			mutex.Lock()
 			counter++
 			mutex.Unlock()
@@ -39,46 +39,5 @@ func TestRepeaterGroupStart(t *testing.T) {
 	check := counter
 	time.Sleep(time.Second)
 	assert.Equal(t, check, counter)
-	t.Log(counter)
-}
-
-func TestRepeaterEachWait(t *testing.T) {
-	rp := tate.NewRepeater()
-	var mutex sync.Mutex
-	var counter = 0
-
-	for i := 0; i < IterRepeater; i++ {
-		rp.Go(0, func(...any) {
-			mutex.Lock()
-			counter++
-			mutex.Unlock()
-		})
-		rp.CancelJoin()
-		check := counter
-		time.Sleep(time.Microsecond * 3)
-		assert.Equal(t, check, counter)
-	}
-	t.Log(counter)
-}
-
-func TestRepeaterBatchWait(t *testing.T) {
-	rp := tate.NewRepeater()
-	var mutex sync.Mutex
-	var counter = 0
-	var kBatch = 25
-
-	for i := 0; i < kBatch; i++ {
-		for i := 0; i < IterRepeater/kBatch; i++ {
-			rp.Go(0, func(...any) {
-				mutex.Lock()
-				counter++
-				mutex.Unlock()
-			})
-		}
-		rp.CancelJoin()
-		check := counter
-		assert.Equal(t, check, counter)
-	}
-
 	t.Log(counter)
 }

@@ -9,7 +9,7 @@ import (
 
 func TestGoHandle(t *testing.T) {
 	check := false
-	h := tate.Go(func(...any) {
+	h := tate.Go(func(args ...any) {
 		check = true
 	})
 	h.Join()
@@ -17,7 +17,7 @@ func TestGoHandle(t *testing.T) {
 }
 
 func TestShouldPanic(t *testing.T) {
-	h := tate.Go(func(...any) {})
+	h := tate.Go(func(args ...any) {})
 	h.Join()
 	assert.Panics(t, func() { h.Join() })
 	assert.Panics(t, func() { h.Join() })
@@ -27,9 +27,9 @@ func TestInnerHandle(t *testing.T) {
 	check1 := false
 	check2 := false
 
-	h2 := tate.Go(func(...any) { check2 = true })
+	h2 := tate.Go(func(args ...any) { check2 = true })
 
-	h1 := tate.Go(func(...any) {
+	h1 := tate.Go(func(args ...any) {
 		check1 = true
 		h2.Join()
 	})

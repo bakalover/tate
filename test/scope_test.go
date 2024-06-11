@@ -20,7 +20,7 @@ func TestFixScope(t *testing.T) {
 func TestFixScopeGo(t *testing.T) {
 	check := false
 	tate.FixScope(func(s *tate.Scope) {
-		s.Go(func(...any) {
+		s.Go(func(args ...any) {
 			time.Sleep(time.Second * 2)
 			check = true
 		})
@@ -33,12 +33,12 @@ func TestFixScopeGoGroup(t *testing.T) {
 	check2 := false
 
 	tate.FixScope(func(s *tate.Scope) {
-		s.Go(func(...any) {
+		s.Go(func(args ...any) {
 			time.Sleep(time.Second * 2)
 			check1 = true
 		})
 
-		s.Go(func(...any) {
+		s.Go(func(args ...any) {
 			time.Sleep(time.Second * 2)
 			check2 = true
 		})
@@ -58,7 +58,7 @@ func TestDynScope(t *testing.T) {
 func TestDynScopeGo(t *testing.T) {
 	check := atomic.Bool{}
 	j := tate.DynScope(func(s *tate.Scope) {
-		s.Go(func(...any) {
+		s.Go(func(args ...any) {
 			time.Sleep(2 * time.Second)
 			check.Store(true)
 		})
@@ -72,12 +72,12 @@ func TestDynScopeGoGroup(t *testing.T) {
 	check1 := atomic.Bool{}
 	check2 := atomic.Bool{}
 	j := tate.DynScope(func(s *tate.Scope) {
-		s.Go(func(...any) {
+		s.Go(func(args ...any) {
 			time.Sleep(2 * time.Second)
 			check1.Store(true)
 		})
 
-		s.Go(func(...any) {
+		s.Go(func(args ...any) {
 			time.Sleep(2 * time.Second)
 			check2.Store(true)
 		})
@@ -92,7 +92,7 @@ func TestSubDynScope(t *testing.T) {
 	j := tate.DynScope(func(s *tate.Scope) {
 		innerCheck := false
 		tate.FixScope(func(sub *tate.Scope) {
-			sub.Go(func(...any) {
+			sub.Go(func(args ...any) {
 				time.Sleep(2 * time.Second)
 				innerCheck = true
 				check = true
